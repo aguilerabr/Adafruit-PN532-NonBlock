@@ -43,9 +43,7 @@ byte pn532_packetbuffer[PN532_PACKBUFFSIZ]; ///< Packet buffer used in various
     @param  theSer    pointer to HardWare Serial bus to use
 */
 /**************************************************************************/
-PN532_HSU_Async::PN532_HSU_Async(uint8_t reset, HardwareSerial *theSer)
-    : _reset(reset) {
-  pinMode(_reset, OUTPUT);
+PN532_HSU_Async::PN532_HSU_Async(HardwareSerial *theSer) {
   ser_dev = theSer;
 }
 

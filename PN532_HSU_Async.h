@@ -149,7 +149,7 @@ enum PN532State {
 
 public:
 
-  PN532_HSU_Async(uint8_t reset, HardwareSerial *theSer); // Hardware UART
+  PN532_HSU_Async(HardwareSerial *theSer); // Hardware UART
   bool begin(uint8_t rxPin = -1, uint8_t txPin = -1);
 
   void reset(void);
