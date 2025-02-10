@@ -10,13 +10,10 @@
 */
 /**************************************************************************/
 
-#ifndef ADAFRUIT_PN532_H
-#define ADAFRUIT_PN532_H
+#ifndef PN532_HSU_ASYNC_H
+#define PN532_HSU_ASYNC_H
 
 #include "Arduino.h"
-
-#include <Adafruit_I2CDevice.h>
-#include <Adafruit_SPIDevice.h>
 
 #define PN532_PREAMBLE (0x00)   ///< Command sequence start, byte 1/3
 #define PN532_STARTCODE1 (0x00) ///< Command sequence start, byte 2/3
@@ -135,18 +132,25 @@
 #define PN532_GPIO_P34 (4)              ///< GPIO 34
 #define PN532_GPIO_P35 (5)              ///< GPIO 35
 
+#define MIFAREDEBUG
+
 /**
  * @brief Class for working with Adafruit PN532 NFC/RFID breakout boards.
  */
-class Adafruit_PN532 {
+class PN532_HSU_Async {
+
+enum PN532State {
+    PN532_STATE_IDLE,
+    PN532_STATE_WAIT_ACK,
+    PN532_STATE_WAIT_READY,
+    PN532_STATE_READ_ACK,
+    PN532_STATE_DONE
+};
+
 public:
-  Adafruit_PN532(uint8_t clk, uint8_t miso, uint8_t mosi,
-                 uint8_t ss);                          // Software SPI
-  Adafruit_PN532(uint8_t ss, SPIClass *theSPI = &SPI); // Hardware SPI
-  Adafruit_PN532(uint8_t irq, uint8_t reset,
-                 TwoWire *theWire = &Wire);              // Hardware I2C
-  Adafruit_PN532(uint8_t reset, HardwareSerial *theSer); // Hardware UART
-  bool begin(void);
+
+  PN532_HSU_Async(uint8_t reset, HardwareSerial *theSer); // Hardware UART
+  bool begin(uint8_t rxPin = -1, uint8_t txPin = -1);
 
   void reset(void);
   void wakeup(void);
@@ -155,7 +159,8 @@ public:
   bool SAMConfig(void);
   uint32_t getFirmwareVersion(void);
   bool sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen,
-                           uint16_t timeout = 100);
+                           uint16_t timeout = 100, bool async = false);
+ 
   bool writeGPIO(uint8_t pinstate);
   uint8_t readGPIO(void);
   bool setPassiveActivationRetries(uint8_t maxRetries);
@@ -200,6 +205,7 @@ public:
   static void PrintHexChar(const byte *pbtData, const uint32_t numBytes);
 
 private:
+
   int8_t _irq = -1, _reset = -1, _cs = -1;
   int8_t _uid[7];      // ISO14443A uid
   int8_t _uidLen;      // uid len
@@ -213,9 +219,15 @@ private:
   bool waitready(uint16_t timeout);
   bool readack();
 
-  Adafruit_SPIDevice *spi_dev = NULL;
-  Adafruit_I2CDevice *i2c_dev = NULL;
   HardwareSerial *ser_dev = NULL;
+
+  PN532State currentState = PN532_STATE_IDLE;
+  uint32_t lastCheckTime = 0;
+  uint16_t responseTimeout = 0;
+
+  bool asyncMode = true;
+
+  bool checkSendCommand();
 };
 
 #endif
