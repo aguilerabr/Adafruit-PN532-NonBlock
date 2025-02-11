@@ -132,7 +132,8 @@
 #define PN532_GPIO_P34 (4)              ///< GPIO 34
 #define PN532_GPIO_P35 (5)              ///< GPIO 35
 
-#define MIFAREDEBUG
+//#define MIFAREDEBUG
+#define FUNC_DISABLE
 
 /**
  * @brief Class for working with Adafruit PN532 NFC/RFID breakout boards.
@@ -160,9 +161,11 @@ public:
   uint32_t getFirmwareVersion(void);
   bool sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen,
                            uint16_t timeout = 100, bool async = false);
- 
+
+#ifndef FUNC_DISABLE                           
   bool writeGPIO(uint8_t pinstate);
   uint8_t readGPIO(void);
+#endif 
   bool setPassiveActivationRetries(uint8_t maxRetries);
 
   // ISO14443A functions
@@ -171,9 +174,12 @@ public:
       uint16_t timeout = 0); // timeout 0 means no timeout - will block forever.
   bool startPassiveTargetIDDetection(uint8_t cardbaudrate);
   bool readDetectedPassiveTargetID(uint8_t *uid, uint8_t *uidLength);
+#ifndef FUNC_DISABLE 
   bool inDataExchange(uint8_t *send, uint8_t sendLength, uint8_t *response,
                       uint8_t *responseLength);
+#endif  
   bool inListPassiveTarget();
+#ifndef FUNC_DISABLE 
   uint8_t AsTarget();
   uint8_t getDataTarget(uint8_t *cmd, uint8_t *cmdlen);
   uint8_t setDataTarget(uint8_t *cmd, uint8_t cmdlen);
@@ -197,8 +203,10 @@ public:
   // NTAG2xx functions
   uint8_t ntag2xx_ReadPage(uint8_t page, uint8_t *buffer);
   uint8_t ntag2xx_WritePage(uint8_t page, uint8_t *data);
-  uint8_t ntag2xx_WriteNDEFURI(uint8_t uriIdentifier, char *url,
-                               uint8_t dataLen);
+  uint8_t ntag2xx_WriteNDEFURI(uint8_t uriIdentifier, char *url, uint8_t dataLen);
+#endif
+
+  void setOnTagDetected(void (*func)(uint8_t *uid, uint8_t uidLen));
 
   // Help functions to display formatted text
   static void PrintHex(const byte *data, const uint32_t numBytes);
@@ -226,6 +234,9 @@ private:
   uint16_t responseTimeout = 0;
 
   bool asyncMode = true;
+  void (*_onTagDetected)(uint8_t *uid, uint8_t uidLen);
+  uint8_t _lastUidCallback[7];
+  uint8_t _lastUidLenCallback;
 
   bool checkSendCommand();
 };

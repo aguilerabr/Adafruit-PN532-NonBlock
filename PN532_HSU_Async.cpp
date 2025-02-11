@@ -339,7 +339,7 @@ bool PN532_HSU_Async::checkSendCommand() {
   return false;
 }
 
-
+#ifndef FUNC_DISABLE
 /**************************************************************************/
 /*!
     @brief   Writes an 8-bit value that sets the state of the PN532's GPIO
@@ -460,6 +460,7 @@ uint8_t PN532_HSU_Async::readGPIO(void) {
 
   return pn532_packetbuffer[p3offset];
 }
+#endif 
 
 /**************************************************************************/
 /*!
@@ -529,13 +530,12 @@ bool PN532_HSU_Async::setPassiveActivationRetries(uint8_t maxRetries) {
     @return  1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-bool PN532_HSU_Async::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid,
-                                         uint8_t *uidLength, uint16_t timeout) {
+bool PN532_HSU_Async::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout) {
   pn532_packetbuffer[0] = PN532_COMMAND_INLISTPASSIVETARGET;
   pn532_packetbuffer[1] = 1; // max 1 cards at once (we can set this to 2 later)
   pn532_packetbuffer[2] = cardbaudrate;
 
-  if (!sendCommandCheckAck(pn532_packetbuffer, 3, timeout)) {
+  if (!sendCommandCheckAck(pn532_packetbuffer, 3, timeout, true)) {
 #ifdef PN532DEBUG
     PN532DEBUGPRINT.println(F("No card(s) read"));
 #endif
@@ -558,7 +558,7 @@ bool PN532_HSU_Async::startPassiveTargetIDDetection(uint8_t cardbaudrate) {
   pn532_packetbuffer[1] = 1; // max 1 cards at once (we can set this to 2 later)
   pn532_packetbuffer[2] = cardbaudrate;
 
-  return sendCommandCheckAck(pn532_packetbuffer, 3);
+  return sendCommandCheckAck(pn532_packetbuffer, 3, 0, true);
 }
 
 /**************************************************************************/
@@ -573,12 +573,11 @@ bool PN532_HSU_Async::startPassiveTargetIDDetection(uint8_t cardbaudrate) {
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-bool PN532_HSU_Async::readDetectedPassiveTargetID(uint8_t *uid,
-                                                  uint8_t *uidLength) {
+bool PN532_HSU_Async::readDetectedPassiveTargetID(uint8_t *uid, uint8_t *uidLength) {
   // read data packet
                                                     
   int size = 0;
-  readdata(pn532_packetbuffer, 19); // era 20 antes, mas não sei porque
+  readdata(pn532_packetbuffer, 19); // era 20 antes, mas não sei porque só vinham 19
 
   // check some basic stuff
 
@@ -613,24 +612,40 @@ bool PN532_HSU_Async::readDetectedPassiveTargetID(uint8_t *uid,
 #endif
 
   /* Card appears to be Mifare Classic */
-  *uidLength = pn532_packetbuffer[12];
+  uint8_t lenght = pn532_packetbuffer[12];
+  *uidLength = lenght;
 #ifdef MIFAREDEBUG
   PN532DEBUGPRINT.print(F("UID:"));
 #endif
-  for (uint8_t i = 0; i < pn532_packetbuffer[12]; i++) {
-    uid[i] = pn532_packetbuffer[13 + i];
+  memcpy(uid, &pn532_packetbuffer[13], lenght);
+  //for (uint8_t i = 0; i < lenght; i++) {
+  //  uid[i] = pn532_packetbuffer[13 + i];
 #ifdef MIFAREDEBUG
     PN532DEBUGPRINT.print(F(" 0x"));
     PN532DEBUGPRINT.print(uid[i], HEX);
 #endif
-  }
+  //}
 #ifdef MIFAREDEBUG
   PN532DEBUGPRINT.println();
 #endif
 
+  if (_lastUidLenCallback == lenght) {
+    if (memcmp(uid, _lastUidCallback, _lastUidLenCallback) == 0) {
+      return 1;
+    }
+  }
+
+  memcpy(_lastUidCallback, &pn532_packetbuffer[13], lenght);
+  _lastUidLenCallback = lenght;
+
+  if (_onTagDetected) { // chama o callback quando for um tag diferente
+    _onTagDetected(_lastUidCallback, _lastUidLenCallback);
+  }
+
   return 1;
 }
 
+#ifndef FUNC_DISABLE
 /**************************************************************************/
 /*!
     @brief   Exchanges an APDU with the currently inlisted peer
@@ -642,9 +657,7 @@ bool PN532_HSU_Async::readDetectedPassiveTargetID(uint8_t *uid,
     @return  true on success, false otherwise.
 */
 /**************************************************************************/
-bool PN532_HSU_Async::inDataExchange(uint8_t *send, uint8_t sendLength,
-                                    uint8_t *response,
-                                    uint8_t *responseLength) {
+bool PN532_HSU_Async::inDataExchange(uint8_t *send, uint8_t sendLength, uint8_t *response, uint8_t *responseLength) {
   if (sendLength > PN532_PACKBUFFSIZ - 2) {
 #ifdef PN532DEBUG
     PN532DEBUGPRINT.println(F("APDU length too long for packet buffer"));
@@ -718,6 +731,8 @@ bool PN532_HSU_Async::inDataExchange(uint8_t *send, uint8_t sendLength,
   }
 }
 
+#endif 
+
 /**************************************************************************/
 /*!
     @brief   'InLists' a passive target. PN532 acting as reader/initiator,
@@ -790,6 +805,7 @@ bool PN532_HSU_Async::inListPassiveTarget() {
   return true;
 }
 
+#ifndef FUNC_DISABLE
 /***** Mifare Classic Functions ******/
 
 /**************************************************************************/
@@ -1497,6 +1513,8 @@ uint8_t PN532_HSU_Async::ntag2xx_WriteNDEFURI(uint8_t uriIdentifier, char *url,
   return 1;
 }
 
+#endif
+
 /************** high level communication functions (handles both I2C and SPI) */
 
 /**************************************************************************/
@@ -1575,6 +1593,7 @@ void PN532_HSU_Async::readdata(uint8_t *buff, uint8_t n) {
 #endif
 }
 
+#ifndef FUNC_DISABLE
 /**************************************************************************/
 /*!
     @brief   set the PN532 as iso14443a Target behaving as a SmartCard
@@ -1672,6 +1691,7 @@ uint8_t PN532_HSU_Async::setDataTarget(uint8_t *cmd, uint8_t cmdlen) {
   int offset = 6;
   return (pn532_packetbuffer[offset] == 0x15);
 }
+#endif
 
 /**************************************************************************/
 /*!
@@ -1714,4 +1734,10 @@ void PN532_HSU_Async::writecommand(uint8_t *cmd, uint8_t cmdlen) {
 
   ser_dev->write(packet, 8 + cmdlen);
   
+}
+
+// Callback toda vez detectar o tag
+void PN532_HSU_Async::setOnTagDetected(void (*func)(uint8_t *uid, uint8_t uidLen))
+{
+  _onTagDetected = func;
 }
