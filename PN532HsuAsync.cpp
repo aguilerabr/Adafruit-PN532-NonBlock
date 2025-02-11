@@ -72,10 +72,8 @@ bool PN532HsuAsync::begin(uint8_t rxPin, uint8_t txPin) {
   
   reset(); // HW reset - put in known state
   delay(10);
-
-  wakeup(); // hey! wakeup!
-
-  return true;
+  
+  return wakeup(); // hey! wakeup!
 }
 
 /**************************************************************************/
@@ -98,7 +96,7 @@ void PN532HsuAsync::reset(void) {
     @brief  Wakeup from LowVbat mode into Normal Mode.
 */
 /**************************************************************************/
-void PN532HsuAsync::wakeup(void) {
+bool PN532HsuAsync::wakeup(void) {
   // interface specific wakeups - each one is unique!
   if (ser_dev) {
     uint8_t w[3] = {0x55, 0x00, 0x00};
@@ -109,7 +107,7 @@ void PN532HsuAsync::wakeup(void) {
   // PN532 will clock stretch I2C during SAMConfig as a "wakeup"
 
   // need to config SAM to stay in Normal Mode
-  SAMConfig();
+  return SAMConfig();
 }
 
 /**************************************************************************/
