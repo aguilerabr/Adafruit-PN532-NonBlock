@@ -62,17 +62,19 @@ bool PN532HsuAsync::begin(uint8_t rxPin, uint8_t txPin) {
 #else
     ser_dev->begin(115200);
 #endif
-
     // clear out anything in read buffer
     while (ser_dev->available())
       ser_dev->read();
-  } else {
-    // no interface specified
+  } else { // no interface specified
+    log_v("Sem interface definida");
     return false;
   }
+  
   reset(); // HW reset - put in known state
   delay(10);
+
   wakeup(); // hey! wakeup!
+
   return true;
 }
 
@@ -279,12 +281,10 @@ bool PN532HsuAsync::sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen,
   } else {
   
     bool status;
-    //Serial.println("Checando");
     while(!(status = checkSendCommand())) {
-      //Serial.print(currentState);
       delay(10);
     }
-    //Serial.println(status ? "true" : "false");
+
     return status;
   
   }
@@ -307,8 +307,7 @@ bool PN532HsuAsync::checkSendCommand() {
     uint32_t now = millis();
     if ((now - lastCheckTime) > responseTimeout) {
         currentState = PN532_STATE_IDLE;  // Timeout
-        Serial.println("Timeout");
-        return false;
+        return true;
     }  
   }
 
@@ -1525,9 +1524,7 @@ uint8_t PN532HsuAsync::ntag2xx_WriteNDEFURI(uint8_t uriIdentifier, char *url,
 bool PN532HsuAsync::readack() {
   uint8_t ackbuff[6];
 
-  if (ser_dev) {
-    readdata(ackbuff, 6);
-  }
+  readdata(ackbuff, 6);
 
   return (0 == memcmp((char *)ackbuff, (char *)pn532ack, 6));
 }
@@ -1731,9 +1728,9 @@ void PN532HsuAsync::writecommand(uint8_t *cmd, uint8_t cmdlen) {
     }
     Serial.println();
 #endif
-
-  ser_dev->write(packet, 8 + cmdlen);
-  
+  if (ser_dev) {
+    ser_dev->write(packet, 8 + cmdlen);
+  }
 }
 
 // Callback toda vez detectar o tag

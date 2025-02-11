@@ -154,7 +154,7 @@ public:
   bool begin(uint8_t rxPin = -1, uint8_t txPin = -1);
 
   void reset(void);
-  void wakeup(void);
+  bool wakeup(void);
 
   // Generic PN532 functions
   bool SAMConfig(void);
