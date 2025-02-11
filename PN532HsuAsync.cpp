@@ -13,7 +13,7 @@
 */
 /**************************************************************************/
 
-#include "PN532_HSU_Async.h"
+#include "PN532HsuAsync.h"
 
 byte pn532ack[] = {0x00, 0x00, 0xFF,
                    0x00, 0xFF, 0x00}; ///< ACK message from PN532
@@ -43,7 +43,7 @@ byte pn532_packetbuffer[PN532_PACKBUFFSIZ]; ///< Packet buffer used in various
     @param  theSer    pointer to HardWare Serial bus to use
 */
 /**************************************************************************/
-PN532_HSU_Async::PN532_HSU_Async(HardwareSerial *theSer) {
+PN532HsuAsync::PN532HsuAsync(HardwareSerial *theSer) {
   ser_dev = theSer;
 }
 
@@ -54,7 +54,7 @@ PN532_HSU_Async::PN532_HSU_Async(HardwareSerial *theSer) {
     @returns  true if successful, otherwise false
 */
 /**************************************************************************/
-bool PN532_HSU_Async::begin(uint8_t rxPin, uint8_t txPin) {
+bool PN532HsuAsync::begin(uint8_t rxPin, uint8_t txPin) {
   if (ser_dev) {
 
 #ifdef ESP_PLATFORM
@@ -81,7 +81,7 @@ bool PN532_HSU_Async::begin(uint8_t rxPin, uint8_t txPin) {
     @brief  Perform a hardware reset. Requires reset pin to have been provided.
 */
 /**************************************************************************/
-void PN532_HSU_Async::reset(void) {
+void PN532HsuAsync::reset(void) {
   // see Datasheet p.209, Fig.48 for timings
   if (_reset != -1) {
     digitalWrite(_reset, LOW);
@@ -96,7 +96,7 @@ void PN532_HSU_Async::reset(void) {
     @brief  Wakeup from LowVbat mode into Normal Mode.
 */
 /**************************************************************************/
-void PN532_HSU_Async::wakeup(void) {
+void PN532HsuAsync::wakeup(void) {
   // interface specific wakeups - each one is unique!
   if (ser_dev) {
     uint8_t w[3] = {0x55, 0x00, 0x00};
@@ -118,7 +118,7 @@ void PN532_HSU_Async::wakeup(void) {
     @param  numBytes  Data length in bytes
 */
 /**************************************************************************/
-void PN532_HSU_Async::PrintHex(const byte *data, const uint32_t numBytes) {
+void PN532HsuAsync::PrintHex(const byte *data, const uint32_t numBytes) {
   uint32_t szPos;
   for (szPos = 0; szPos < numBytes; szPos++) {
     PN532DEBUGPRINT.print(F("0x"));
@@ -144,7 +144,7 @@ void PN532_HSU_Async::PrintHex(const byte *data, const uint32_t numBytes) {
     @param  numBytes  Data length in bytes
 */
 /**************************************************************************/
-void PN532_HSU_Async::PrintHexChar(const byte *data, const uint32_t numBytes) {
+void PN532HsuAsync::PrintHexChar(const byte *data, const uint32_t numBytes) {
   uint32_t szPos;
   for (szPos = 0; szPos < numBytes; szPos++) {
     // Append leading 0 for small values
@@ -172,7 +172,7 @@ void PN532_HSU_Async::PrintHexChar(const byte *data, const uint32_t numBytes) {
     @returns  The chip's firmware version and ID
 */
 /**************************************************************************/
-uint32_t PN532_HSU_Async::getFirmwareVersion(void) {
+uint32_t PN532HsuAsync::getFirmwareVersion(void) {
   uint32_t response;
 
   pn532_packetbuffer[0] = PN532_COMMAND_GETFIRMWAREVERSION;
@@ -218,7 +218,7 @@ uint32_t PN532_HSU_Async::getFirmwareVersion(void) {
 */
 /**************************************************************************/
 // default timeout of one second
-// bool PN532_HSU_Async::sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen,
+// bool PN532HsuAsync::sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen,
 //                                          uint16_t timeout) {
 
 //   // I2C works without using IRQ pin by polling for RDY byte
@@ -262,7 +262,7 @@ uint32_t PN532_HSU_Async::getFirmwareVersion(void) {
 // }
 
 /**************************************************************************/
-bool PN532_HSU_Async::sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen,
+bool PN532HsuAsync::sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen,
   uint16_t timeout, bool async) {
 
   if (currentState == PN532_STATE_IDLE || currentState == PN532_STATE_DONE) {
@@ -298,7 +298,7 @@ bool PN532_HSU_Async::sendCommandCheckAck(uint8_t *cmd, uint8_t cmdlen,
               ACK was recieved
 */
 /**************************************************************************/
-bool PN532_HSU_Async::checkSendCommand() {
+bool PN532HsuAsync::checkSendCommand() {
   if (currentState == PN532_STATE_IDLE || currentState == PN532_STATE_DONE) {
       return false;
   }
@@ -363,7 +363,7 @@ bool PN532_HSU_Async::checkSendCommand() {
     @return  1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-bool PN532_HSU_Async::writeGPIO(uint8_t pinstate) {
+bool PN532HsuAsync::writeGPIO(uint8_t pinstate) {
   // uint8_t errorbit;
 
   // Make sure pinstate does not try to toggle P32 or P34
@@ -411,7 +411,7 @@ bool PN532_HSU_Async::writeGPIO(uint8_t pinstate) {
              pinState[5]  = P35
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::readGPIO(void) {
+uint8_t PN532HsuAsync::readGPIO(void) {
   pn532_packetbuffer[0] = PN532_COMMAND_READGPIO;
 
   // Send the READGPIO command (0x0C)
@@ -468,7 +468,7 @@ uint8_t PN532_HSU_Async::readGPIO(void) {
     @return  true on success, false otherwise.
 */
 /**************************************************************************/
-bool PN532_HSU_Async::SAMConfig(void) {
+bool PN532HsuAsync::SAMConfig(void) {
   pn532_packetbuffer[0] = PN532_COMMAND_SAMCONFIGURATION;
   pn532_packetbuffer[1] = 0x01; // normal mode;
   pn532_packetbuffer[2] = 0x14; // timeout 50ms * 20 = 1 second
@@ -494,7 +494,7 @@ bool PN532_HSU_Async::SAMConfig(void) {
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-bool PN532_HSU_Async::setPassiveActivationRetries(uint8_t maxRetries) {
+bool PN532HsuAsync::setPassiveActivationRetries(uint8_t maxRetries) {
   pn532_packetbuffer[0] = PN532_COMMAND_RFCONFIGURATION;
   pn532_packetbuffer[1] = 5;    // Config item 5 (MaxRetries)
   pn532_packetbuffer[2] = 0xFF; // MxRtyATR (default = 0xFF)
@@ -530,7 +530,7 @@ bool PN532_HSU_Async::setPassiveActivationRetries(uint8_t maxRetries) {
     @return  1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-bool PN532_HSU_Async::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout) {
+bool PN532HsuAsync::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout) {
   pn532_packetbuffer[0] = PN532_COMMAND_INLISTPASSIVETARGET;
   pn532_packetbuffer[1] = 1; // max 1 cards at once (we can set this to 2 later)
   pn532_packetbuffer[2] = cardbaudrate;
@@ -553,7 +553,7 @@ bool PN532_HSU_Async::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, ui
     @return  1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-bool PN532_HSU_Async::startPassiveTargetIDDetection(uint8_t cardbaudrate) {
+bool PN532HsuAsync::startPassiveTargetIDDetection(uint8_t cardbaudrate) {
   pn532_packetbuffer[0] = PN532_COMMAND_INLISTPASSIVETARGET;
   pn532_packetbuffer[1] = 1; // max 1 cards at once (we can set this to 2 later)
   pn532_packetbuffer[2] = cardbaudrate;
@@ -573,7 +573,7 @@ bool PN532_HSU_Async::startPassiveTargetIDDetection(uint8_t cardbaudrate) {
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-bool PN532_HSU_Async::readDetectedPassiveTargetID(uint8_t *uid, uint8_t *uidLength) {
+bool PN532HsuAsync::readDetectedPassiveTargetID(uint8_t *uid, uint8_t *uidLength) {
   // read data packet
                                                     
   int size = 0;
@@ -657,7 +657,7 @@ bool PN532_HSU_Async::readDetectedPassiveTargetID(uint8_t *uid, uint8_t *uidLeng
     @return  true on success, false otherwise.
 */
 /**************************************************************************/
-bool PN532_HSU_Async::inDataExchange(uint8_t *send, uint8_t sendLength, uint8_t *response, uint8_t *responseLength) {
+bool PN532HsuAsync::inDataExchange(uint8_t *send, uint8_t sendLength, uint8_t *response, uint8_t *responseLength) {
   if (sendLength > PN532_PACKBUFFSIZ - 2) {
 #ifdef PN532DEBUG
     PN532DEBUGPRINT.println(F("APDU length too long for packet buffer"));
@@ -740,7 +740,7 @@ bool PN532_HSU_Async::inDataExchange(uint8_t *send, uint8_t sendLength, uint8_t 
     @return  true on success, false otherwise.
 */
 /**************************************************************************/
-bool PN532_HSU_Async::inListPassiveTarget() {
+bool PN532HsuAsync::inListPassiveTarget() {
   pn532_packetbuffer[0] = PN532_COMMAND_INLISTPASSIVETARGET;
   pn532_packetbuffer[1] = 1;
   pn532_packetbuffer[2] = 0;
@@ -816,7 +816,7 @@ bool PN532_HSU_Async::inListPassiveTarget() {
     @return  true if first block, false otherwise.
 */
 /**************************************************************************/
-bool PN532_HSU_Async::mifareclassic_IsFirstBlock(uint32_t uiBlock) {
+bool PN532HsuAsync::mifareclassic_IsFirstBlock(uint32_t uiBlock) {
   // Test if we are in the small or big sectors
   if (uiBlock < 128)
     return ((uiBlock) % 4 == 0);
@@ -832,7 +832,7 @@ bool PN532_HSU_Async::mifareclassic_IsFirstBlock(uint32_t uiBlock) {
     @return  true if sector trailer, false otherwise.
 */
 /**************************************************************************/
-bool PN532_HSU_Async::mifareclassic_IsTrailerBlock(uint32_t uiBlock) {
+bool PN532HsuAsync::mifareclassic_IsTrailerBlock(uint32_t uiBlock) {
   // Test if we are in the small or big sectors
   if (uiBlock < 128)
     return ((uiBlock + 1) % 4 == 0);
@@ -859,7 +859,7 @@ bool PN532_HSU_Async::mifareclassic_IsTrailerBlock(uint32_t uiBlock) {
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::mifareclassic_AuthenticateBlock(uint8_t *uid,
+uint8_t PN532HsuAsync::mifareclassic_AuthenticateBlock(uint8_t *uid,
                                                         uint8_t uidLen,
                                                         uint32_t blockNumber,
                                                         uint8_t keyNumber,
@@ -874,11 +874,11 @@ uint8_t PN532_HSU_Async::mifareclassic_AuthenticateBlock(uint8_t *uid,
 
 #ifdef MIFAREDEBUG
   PN532DEBUGPRINT.print(F("Trying to authenticate card "));
-  PN532_HSU_Async::PrintHex((byte*)_uid, _uidLen);
+  PN532HsuAsync::PrintHex((byte*)_uid, _uidLen);
   PN532DEBUGPRINT.print(F("Using authentication KEY "));
   PN532DEBUGPRINT.print(keyNumber ? 'B' : 'A');
   PN532DEBUGPRINT.print(F(": "));
-  PN532_HSU_Async::PrintHex((byte*)_key, 6);
+  PN532HsuAsync::PrintHex((byte*)_key, 6);
 #endif
 
   // Prepare the authentication command //
@@ -904,7 +904,7 @@ uint8_t PN532_HSU_Async::mifareclassic_AuthenticateBlock(uint8_t *uid,
   if (pn532_packetbuffer[7] != 0x00) {
 #ifdef PN532DEBUG
     PN532DEBUGPRINT.print(F("Authentification failed: "));
-    PN532_HSU_Async::PrintHexChar(pn532_packetbuffer, 12);
+    PN532HsuAsync::PrintHexChar(pn532_packetbuffer, 12);
 #endif
     return 0;
   }
@@ -925,7 +925,7 @@ uint8_t PN532_HSU_Async::mifareclassic_AuthenticateBlock(uint8_t *uid,
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::mifareclassic_ReadDataBlock(uint8_t blockNumber,
+uint8_t PN532HsuAsync::mifareclassic_ReadDataBlock(uint8_t blockNumber,
                                                     uint8_t *data) {
 #ifdef MIFAREDEBUG
   PN532DEBUGPRINT.print(F("Trying to read 16 bytes from block "));
@@ -955,7 +955,7 @@ uint8_t PN532_HSU_Async::mifareclassic_ReadDataBlock(uint8_t blockNumber,
   if (pn532_packetbuffer[7] != 0x00) {
 #ifdef MIFAREDEBUG
     PN532DEBUGPRINT.println(F("Unexpected response"));
-    PN532_HSU_Async::PrintHexChar(pn532_packetbuffer, 26);
+    PN532HsuAsync::PrintHexChar(pn532_packetbuffer, 26);
 #endif
     return 0;
   }
@@ -968,7 +968,7 @@ uint8_t PN532_HSU_Async::mifareclassic_ReadDataBlock(uint8_t blockNumber,
 #ifdef MIFAREDEBUG
   PN532DEBUGPRINT.print(F("Block "));
   PN532DEBUGPRINT.println(blockNumber);
-  PN532_HSU_Async::PrintHexChar(data, 16);
+  PN532HsuAsync::PrintHexChar(data, 16);
 #endif
 
   return 1;
@@ -986,7 +986,7 @@ uint8_t PN532_HSU_Async::mifareclassic_ReadDataBlock(uint8_t blockNumber,
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::mifareclassic_WriteDataBlock(uint8_t blockNumber,
+uint8_t PN532HsuAsync::mifareclassic_WriteDataBlock(uint8_t blockNumber,
                                                      uint8_t *data) {
 #ifdef MIFAREDEBUG
   PN532DEBUGPRINT.print(F("Trying to write 16 bytes to block "));
@@ -1023,7 +1023,7 @@ uint8_t PN532_HSU_Async::mifareclassic_WriteDataBlock(uint8_t blockNumber,
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::mifareclassic_FormatNDEF(void) {
+uint8_t PN532HsuAsync::mifareclassic_FormatNDEF(void) {
   uint8_t sectorbuffer1[16] = {0x14, 0x01, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1,
                                0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1};
   uint8_t sectorbuffer2[16] = {0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1,
@@ -1065,7 +1065,7 @@ uint8_t PN532_HSU_Async::mifareclassic_FormatNDEF(void) {
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::mifareclassic_WriteNDEFURI(uint8_t sectorNumber,
+uint8_t PN532HsuAsync::mifareclassic_WriteNDEFURI(uint8_t sectorNumber,
                                                    uint8_t uriIdentifier,
                                                    const char *url) {
   // Figure out how long the string is
@@ -1157,7 +1157,7 @@ uint8_t PN532_HSU_Async::mifareclassic_WriteNDEFURI(uint8_t sectorNumber,
     @return  1 on success, 0 on error.
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::mifareultralight_ReadPage(uint8_t page,
+uint8_t PN532HsuAsync::mifareultralight_ReadPage(uint8_t page,
                                                   uint8_t *buffer) {
   if (page >= 64) {
 #ifdef MIFAREDEBUG
@@ -1189,7 +1189,7 @@ uint8_t PN532_HSU_Async::mifareultralight_ReadPage(uint8_t page,
   readdata(pn532_packetbuffer, 26);
 #ifdef MIFAREDEBUG
   PN532DEBUGPRINT.println(F("Received: "));
-  PN532_HSU_Async::PrintHexChar(pn532_packetbuffer, 26);
+  PN532HsuAsync::PrintHexChar(pn532_packetbuffer, 26);
 #endif
 
   /* If byte 8 isn't 0x00 we probably have an error */
@@ -1203,7 +1203,7 @@ uint8_t PN532_HSU_Async::mifareultralight_ReadPage(uint8_t page,
   } else {
 #ifdef MIFAREDEBUG
     PN532DEBUGPRINT.println(F("Unexpected response reading block: "));
-    PN532_HSU_Async::PrintHexChar(pn532_packetbuffer, 26);
+    PN532HsuAsync::PrintHexChar(pn532_packetbuffer, 26);
 #endif
     return 0;
   }
@@ -1213,7 +1213,7 @@ uint8_t PN532_HSU_Async::mifareultralight_ReadPage(uint8_t page,
   PN532DEBUGPRINT.print(F("Page "));
   PN532DEBUGPRINT.print(page);
   PN532DEBUGPRINT.println(F(":"));
-  PN532_HSU_Async::PrintHexChar(buffer, 4);
+  PN532HsuAsync::PrintHexChar(buffer, 4);
 #endif
 
   // Return OK signal
@@ -1232,7 +1232,7 @@ uint8_t PN532_HSU_Async::mifareultralight_ReadPage(uint8_t page,
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::mifareultralight_WritePage(uint8_t page,
+uint8_t PN532HsuAsync::mifareultralight_WritePage(uint8_t page,
                                                    uint8_t *data) {
 
   if (page >= 64) {
@@ -1286,7 +1286,7 @@ uint8_t PN532_HSU_Async::mifareultralight_WritePage(uint8_t page,
     @return  1 on success, 0 on error.
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::ntag2xx_ReadPage(uint8_t page, uint8_t *buffer) {
+uint8_t PN532HsuAsync::ntag2xx_ReadPage(uint8_t page, uint8_t *buffer) {
   // TAG Type       PAGES   USER START    USER STOP
   // --------       -----   ----------    ---------
   // NTAG 203       42      4             39
@@ -1324,7 +1324,7 @@ uint8_t PN532_HSU_Async::ntag2xx_ReadPage(uint8_t page, uint8_t *buffer) {
   readdata(pn532_packetbuffer, 26);
 #ifdef MIFAREDEBUG
   PN532DEBUGPRINT.println(F("Received: "));
-  PN532_HSU_Async::PrintHexChar(pn532_packetbuffer, 26);
+  PN532HsuAsync::PrintHexChar(pn532_packetbuffer, 26);
 #endif
 
   /* If byte 8 isn't 0x00 we probably have an error */
@@ -1338,7 +1338,7 @@ uint8_t PN532_HSU_Async::ntag2xx_ReadPage(uint8_t page, uint8_t *buffer) {
   } else {
 #ifdef MIFAREDEBUG
     PN532DEBUGPRINT.println(F("Unexpected response reading block: "));
-    PN532_HSU_Async::PrintHexChar(pn532_packetbuffer, 26);
+    PN532HsuAsync::PrintHexChar(pn532_packetbuffer, 26);
 #endif
     return 0;
   }
@@ -1348,7 +1348,7 @@ uint8_t PN532_HSU_Async::ntag2xx_ReadPage(uint8_t page, uint8_t *buffer) {
   PN532DEBUGPRINT.print(F("Page "));
   PN532DEBUGPRINT.print(page);
   PN532DEBUGPRINT.println(F(":"));
-  PN532_HSU_Async::PrintHexChar(buffer, 4);
+  PN532HsuAsync::PrintHexChar(buffer, 4);
 #endif
 
   // Return OK signal
@@ -1367,7 +1367,7 @@ uint8_t PN532_HSU_Async::ntag2xx_ReadPage(uint8_t page, uint8_t *buffer) {
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::ntag2xx_WritePage(uint8_t page, uint8_t *data) {
+uint8_t PN532HsuAsync::ntag2xx_WritePage(uint8_t page, uint8_t *data) {
   // TAG Type       PAGES   USER START    USER STOP
   // --------       -----   ----------    ---------
   // NTAG 203       42      4             39
@@ -1429,7 +1429,7 @@ uint8_t PN532_HSU_Async::ntag2xx_WritePage(uint8_t page, uint8_t *data) {
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::ntag2xx_WriteNDEFURI(uint8_t uriIdentifier, char *url,
+uint8_t PN532HsuAsync::ntag2xx_WriteNDEFURI(uint8_t uriIdentifier, char *url,
                                              uint8_t dataLen) {
   uint8_t pageBuffer[4] = {0, 0, 0, 0};
 
@@ -1522,7 +1522,7 @@ uint8_t PN532_HSU_Async::ntag2xx_WriteNDEFURI(uint8_t uriIdentifier, char *url,
     @brief  Tries to read the SPI or I2C ACK signal
 */
 /**************************************************************************/
-bool PN532_HSU_Async::readack() {
+bool PN532HsuAsync::readack() {
   uint8_t ackbuff[6];
 
   if (ser_dev) {
@@ -1537,7 +1537,7 @@ bool PN532_HSU_Async::readack() {
     @brief  Return true if the PN532 is ready with a response.
 */
 /**************************************************************************/
-bool PN532_HSU_Async::isready() {
+bool PN532HsuAsync::isready() {
   if (ser_dev) {
     // Serial ready check based on non-zero read buffer
     return (ser_dev->available() != 0);
@@ -1553,7 +1553,7 @@ bool PN532_HSU_Async::isready() {
     @param  timeout   Timeout before giving up
 */
 /**************************************************************************/
-bool PN532_HSU_Async::waitready(uint16_t timeout) {
+bool PN532HsuAsync::waitready(uint16_t timeout) {
   uint16_t timer = 0;
   while (!isready()) {
     if (timeout != 0) {
@@ -1578,7 +1578,7 @@ bool PN532_HSU_Async::waitready(uint16_t timeout) {
     @param  n         Number of bytes to be read
 */
 /**************************************************************************/
-void PN532_HSU_Async::readdata(uint8_t *buff, uint8_t n) {
+void PN532HsuAsync::readdata(uint8_t *buff, uint8_t n) {
   if (ser_dev) {
     // Serial read
     ser_dev->readBytes(buff, n);
@@ -1604,7 +1604,7 @@ void PN532_HSU_Async::readdata(uint8_t *buff, uint8_t n) {
              -setDataTarget
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::AsTarget() {
+uint8_t PN532HsuAsync::AsTarget() {
   pn532_packetbuffer[0] = 0x8C;
   uint8_t target[] = {
       0x8C,             // INIT AS TARGET
@@ -1639,7 +1639,7 @@ uint8_t PN532_HSU_Async::AsTarget() {
     @return  true on success, false otherwise.
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::getDataTarget(uint8_t *cmd, uint8_t *cmdlen) {
+uint8_t PN532HsuAsync::getDataTarget(uint8_t *cmd, uint8_t *cmdlen) {
   uint8_t length;
   pn532_packetbuffer[0] = 0x86;
   if (!sendCommandCheckAck(pn532_packetbuffer, 1, 1000)) {
@@ -1672,7 +1672,7 @@ uint8_t PN532_HSU_Async::getDataTarget(uint8_t *cmd, uint8_t *cmdlen) {
     @return  true on success, false otherwise.
 */
 /**************************************************************************/
-uint8_t PN532_HSU_Async::setDataTarget(uint8_t *cmd, uint8_t cmdlen) {
+uint8_t PN532HsuAsync::setDataTarget(uint8_t *cmd, uint8_t cmdlen) {
   uint8_t length;
   // cmd1[0] = 0x8E; Must!
 
@@ -1702,7 +1702,7 @@ uint8_t PN532_HSU_Async::setDataTarget(uint8_t *cmd, uint8_t cmdlen) {
     @param  cmdlen    Command length in bytes
 */
 /**************************************************************************/
-void PN532_HSU_Async::writecommand(uint8_t *cmd, uint8_t cmdlen) {
+void PN532HsuAsync::writecommand(uint8_t *cmd, uint8_t cmdlen) {
 
   // Serial command write.
   uint8_t packet[8 + cmdlen];
@@ -1737,7 +1737,7 @@ void PN532_HSU_Async::writecommand(uint8_t *cmd, uint8_t cmdlen) {
 }
 
 // Callback toda vez detectar o tag
-void PN532_HSU_Async::setOnTagDetected(void (*func)(uint8_t *uid, uint8_t uidLen))
+void PN532HsuAsync::setOnTagDetected(void (*func)(uint8_t *uid, uint8_t uidLen))
 {
   _onTagDetected = func;
 }

@@ -10,8 +10,8 @@
 */
 /**************************************************************************/
 
-#ifndef PN532_HSU_ASYNC_H
-#define PN532_HSU_ASYNC_H
+#ifndef PN532HSUASYNC_H
+#define PN532HSUASYNC_H
 
 #include "Arduino.h"
 
@@ -138,7 +138,7 @@
 /**
  * @brief Class for working with Adafruit PN532 NFC/RFID breakout boards.
  */
-class PN532_HSU_Async {
+class PN532HsuAsync {
 
 enum PN532State {
     PN532_STATE_IDLE,
@@ -150,7 +150,7 @@ enum PN532State {
 
 public:
 
-  PN532_HSU_Async(HardwareSerial *theSer); // Hardware UART
+  PN532HsuAsync(HardwareSerial *theSer); // Hardware UART
   bool begin(uint8_t rxPin = -1, uint8_t txPin = -1);
 
   void reset(void);
