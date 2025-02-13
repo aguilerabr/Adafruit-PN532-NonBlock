@@ -527,7 +527,7 @@ bool PN532HsuAsync::setPassiveActivationRetries(uint8_t maxRetries) {
     @return  1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-bool PN532HsuAsync::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout) {
+int PN532HsuAsync::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint16_t timeout) {
   pn532_packetbuffer[0] = PN532_COMMAND_INLISTPASSIVETARGET;
   pn532_packetbuffer[1] = 1; // max 1 cards at once (we can set this to 2 later)
   pn532_packetbuffer[2] = cardbaudrate;
@@ -539,7 +539,7 @@ bool PN532HsuAsync::readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint
     return 0x0; // no cards read
   }
 
-  return readDetectedPassiveTargetID(uid, uidLength);
+  return readDetectedPassiveTargetID(uid);
 }
 
 /**************************************************************************/
@@ -570,7 +570,7 @@ bool PN532HsuAsync::startPassiveTargetIDDetection(uint8_t cardbaudrate) {
     @returns 1 if everything executed properly, 0 for an error
 */
 /**************************************************************************/
-bool PN532HsuAsync::readDetectedPassiveTargetID(uint8_t *uid, uint8_t *uidLength) {
+int PN532HsuAsync::readDetectedPassiveTargetID(uint8_t *uid) {
   // read data packet
                                                     
   int size = 0;
@@ -609,14 +609,15 @@ bool PN532HsuAsync::readDetectedPassiveTargetID(uint8_t *uid, uint8_t *uidLength
 #endif
 
   /* Card appears to be Mifare Classic */
-  uint8_t lenght = pn532_packetbuffer[12];
-  *uidLength = lenght;
+  uint8_t uid_lenght = pn532_packetbuffer[12];
+  uint8_t* uid_ptr = &pn532_packetbuffer[13];
+
 #ifdef MIFAREDEBUG
   PN532DEBUGPRINT.print(F("UID:"));
 #endif
-  memcpy(uid, &pn532_packetbuffer[13], lenght);
-  //for (uint8_t i = 0; i < lenght; i++) {
-  //  uid[i] = pn532_packetbuffer[13 + i];
+  if (uid) { // copia se tiver o ponteiro
+    memcpy(uid, uid_ptr, uid_lenght);
+  }
 #ifdef MIFAREDEBUG
     PN532DEBUGPRINT.print(F(" 0x"));
     PN532DEBUGPRINT.print(uid[i], HEX);
@@ -626,20 +627,21 @@ bool PN532HsuAsync::readDetectedPassiveTargetID(uint8_t *uid, uint8_t *uidLength
   PN532DEBUGPRINT.println();
 #endif
 
-  if (_lastUidLenCallback == lenght) {
-    if (memcmp(uid, _lastUidCallback, _lastUidLenCallback) == 0) {
-      return 1;
+  if (_lastUidLenCallback == uid_lenght) {
+    if (memcmp(&pn532_packetbuffer[13], _lastUidCallback, _lastUidLenCallback) == 0) {
+      return uid_lenght;
     }
   }
 
-  memcpy(_lastUidCallback, &pn532_packetbuffer[13], lenght);
-  _lastUidLenCallback = lenght;
+  // copia o uid para poder rastrear a mudanca
+  memcpy(_lastUidCallback, uid_ptr, uid_lenght);
+  _lastUidLenCallback = uid_lenght;
 
   if (_onTagDetected) { // chama o callback quando for um tag diferente
     _onTagDetected(_lastUidCallback, _lastUidLenCallback);
   }
 
-  return 1;
+  return uid_lenght;
 }
 
 #ifndef FUNC_DISABLE
